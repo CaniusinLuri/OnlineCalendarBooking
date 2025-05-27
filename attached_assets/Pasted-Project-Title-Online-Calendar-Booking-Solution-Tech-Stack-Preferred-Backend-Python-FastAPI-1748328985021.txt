@@ -1,0 +1,173 @@
+Project Title: Online Calendar Booking Solution
+Tech Stack (Preferred):
+
+Backend: Python (FastAPI or Django)
+
+Frontend: React.js or Vue.js (blue-themed UI)
+
+Database: PostgreSQL
+
+Authentication: OAuth 2.0 (with Google, Microsoft), Two-Factor Authentication (2FA)
+
+Calendar Integration: Google Calendar API, Microsoft Graph API (Outlook), Apple Calendar (CalDAV), Mailcow, iCal
+
+Email Services: SMTP (e.g., Mailgun, SendGrid)
+
+1. Super Administrator (SA) Role
+Authentication:
+
+Must use 2FA (Two-Factor Authentication) for login.
+
+User Management:
+
+SA can create, read, and update users and other SAs.
+
+User fields:
+
+name (string)
+
+email (must be verified)
+
+alias (string, unique)
+
+profile_description (string)
+
+profile_image (URL or file upload)
+
+Email verification must be handled at registration and during email changes.
+
+2. User Availability & Account Management
+Availability Settings:
+
+Users define availability in 24-hour format (e.g., 07:00–23:00).
+
+Password Recovery:
+
+Must be available via email link.
+
+Timezone Support:
+
+Users must select a timezone. All settings and features respect this timezone.
+
+3. Primary Calendar (Per User)
+Each user must define a primary calendar.
+
+Settings (boolean flags):
+
+Receive daily agenda email.
+
+Define the time for agenda email (based on user’s timezone).
+
+4. Multiple Calendars (Per User)
+Users can have multiple calendars.
+
+Default calendar count set by SA. SA can override per user.
+
+Each calendar includes:
+
+alias (e.g., "Work", "Personal", etc., unique per user)
+
+5. Booking Agendas (Per User)
+Users may have multiple booking agendas (limit set by SA, overrideable).
+
+Public booking page URL:
+
+Format: https://smartcal.one/{username}.{calendar_alias}
+
+SA must approve all aliases (admin approval workflow).
+
+SA maintains a blacklist of restricted aliases.
+
+Visitors can:
+
+Book slots by entering email.
+
+Be limited in number of bookings (configurable by SA).
+
+Slot Options:
+
+Duration: 30, 45, or 60 minutes
+
+Buffer before/after meeting: e.g., 15 minutes
+
+Buffers are marked as events (e.g., “Break before meeting”).
+
+6. Calendar Synchronization
+Users configure sync:
+
+One-way or two-way (option in settings).
+
+Always sync secondary → primary (not vice versa).
+
+Sync settings:
+
+Replace event title with [Busy], OR
+
+Prefix original title (e.g., [University] Event)
+
+Prefix derived from calendar alias.
+
+UI for selecting sync settings is developer-defined.
+
+7. Supported Calendar Integrations
+Must integrate with:
+
+Google Calendar
+
+Microsoft Outlook
+
+Apple Calendar (CalDAV)
+
+Mailcow
+
+iCal format
+
+Must detect and notify user when calendar access is lost (e.g., token expiry or password reset).
+
+Send email prompting re-authentication.
+
+8. Meeting Creation (with Team Support)
+Meetings can be created on any connected calendar.
+
+Meeting participants:
+
+Allow inclusion of emails not registered in system.
+
+Registered users shown with a green indicator.
+
+Unregistered emails shown in red (highlighted).
+
+Team Features:
+
+Create/manage email groups (teams).
+
+SA defines team limit per user.
+
+Meeting Types:
+
+Virtual or in-person.
+
+If in-person:
+
+Add travel buffer (30/45/60 min) before and after
+
+Buffers are separate events (e.g., [Work] Travel for next meeting)
+
+Include return travel option.
+
+Video Platform Selection:
+
+Integrate with platforms like Jitsi (does not require auth).
+
+Show available time slots for all participants (team calendar coordination).
+
+User Interface Requirements
+UI must be blue-themed (colors, buttons, highlights).
+
+Must be responsive and modern (Material UI or Tailwind CSS preferred).
+
+Use OAuth 2.0 + token refresh for third-party calendar integrations.
+
+Secure user data and enforce best practices for GDPR compliance.
+
+Let me know if you'd like a visual architecture diagram, database schema draft, or user flow wireframe to go with this specification.
