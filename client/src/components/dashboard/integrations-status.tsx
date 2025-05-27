@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
-import { SiGoogle, SiMicrosoft, SiApple } from "react-icons/si";
+import { SiGoogle, SiApple } from "react-icons/si";
+import { Mail } from "lucide-react";
 
 interface Integration {
   id: string;
@@ -31,7 +32,7 @@ export default function IntegrationsStatus() {
       id: "2",
       name: "Microsoft Outlook",
       provider: "microsoft",
-      icon: SiMicrosoft,
+      icon: Mail,
       isConnected: true,
       lastSync: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
     },
