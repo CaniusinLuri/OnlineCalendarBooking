@@ -19,8 +19,8 @@ const navigationItems = [
   { name: "My Calendars", href: "/calendars", icon: Calendar },
   { name: "Availability", href: "/settings", icon: Clock },
   { name: "Booking Pages", href: "/bookings", icon: LinkIcon },
-  { name: "Teams", href: "/teams", icon: Users },
-  { name: "Integrations", href: "/settings", icon: RefreshCw },
+  { name: "Meeting", href: "/teams", icon: Users },
+  { name: "Integrations", href: "/integrations", icon: RefreshCw },
 ];
 
 const adminItems = [
@@ -39,7 +39,7 @@ function SidebarItem({ item, isActive }: SidebarItemProps) {
 
   return (
     <Link href={item.href}>
-      <a
+      <div
         className={cn(
           "sidebar-item",
           isActive ? "sidebar-item-active" : "sidebar-item-inactive"
@@ -47,7 +47,7 @@ function SidebarItem({ item, isActive }: SidebarItemProps) {
       >
         <Icon className="mr-3 h-5 w-5" />
         {item.name}
-      </a>
+      </div>
     </Link>
   );
 }
@@ -67,7 +67,7 @@ export default function Sidebar() {
               <SidebarItem
                 key={item.name}
                 item={item}
-                isActive={location === item.href}
+                isActive={location.startsWith(item.href) && (location === item.href || item.href !== '/')}
               />
             ))}
 
@@ -82,7 +82,7 @@ export default function Sidebar() {
                     <SidebarItem
                       key={item.name}
                       item={item}
-                      isActive={location === item.href}
+                      isActive={location.startsWith(item.href) && (location === item.href || item.href !== '/')}
                     />
                   ))}
                 </div>

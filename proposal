@@ -1,0 +1,304 @@
+
+Online calendar booking solution.
+
+A Python application is required, installed on AWS, working, and operational.
+The domain is available and AWS access is provided.
+AWS access is available, unless you indicate that there are cheaper alternatives.
+
+You must do the following:
+
+1) The Super Administrator (SA, must have access controlled by 2FA) will create users at their discretion. They may create other SAs.
+1.1 User details: name, email (verified), alias.
+Each user will enter a description of themselves, which will be displayed in the available calendar. An image is available.
+1.2 The SA can perform CRU on users.
+
+2) Each user (there can be many) has different available times.
+The user defines them, for example, I am available from 7:00 AM to 11:00 PM (every day).
+It must work natively with 24:00 hours, not from AM to PM.
+
+Must be able to recover passwords (against email).
+Must control time zones.
+
+3) The user must always define a primary calendar.
+3.1 Flag to indicate whether they should receive an email with the day's agenda.
+3.2 Flag to indicate the time the email is sent.
+3.3 Associated with their time zone.
+
+4) Each user can have "n" calendars. "n" = SA indicates general and personal. That is, everyone has 3 calendars, except John, who will have 5.
+Each calendar will have a "cal.alias", for example, "Work", "Personal", "University".
+
+5) Each user can have "n" calendars available. "n" = SA indicates general and personal. That is, everyone has three available schedules, except for Pedro, who will have five.
+Each user will make the schedules available by time, for example, 30, 45, and 60 minutes.
+There will be a URL like smartcal.one/name.alias
+The SA will approve each name.alias; if there are later versions, there will be blacklists for the names.
+The days ahead will be displayed with the available windows.
+Those who see the URL will be able to book a meeting by entering their email address for the reservation. Each of these email addresses will be able to book "n" scheduled meetings. "n" = the SA indicates general and specific. That is, everyone has three available schedules, except for Pedro, who will have five.
+Each user will define whether they will have coverage slots for these meetings. Coverage slots = 15 minutes up and 15 minutes down. The 15 minutes are decided by the user.
+One slot is for resting.
+
+6) Sync calendars (secondary to the primary):
+6.1 It always syncs from the secondary to the primary.
+6.2 In two ways or in one way. The user decides via a flag in the email.
+6.3 Example in the attached video.
+6.4 Regarding the subject of synchronized appointments, you must allow blocking the subject (you must put [Busy]) or cloning it.
+6.5 If you clone the subject, you must allow a prefix, such as the cal.alias. The prefix is ​​​​per calendar. For example, one of my secondary calendars will have the prefix "[USS]". Or the synchronization starts with the Alias ​​​​in brackets, for example "[University]" and clone the subject. The prefix is ​​​​the cal.alias from point 4.
+You decide how this point is visually managed. Whether it is with alternatives or simply placing the "Busy" in quotation marks or the prefix in single quotation marks "alias".
+
+7) Calendars can be: Google Calendar, Outlook Calendar, Apple Calendar, others, iCal, Mailcow (I use this one).
+It must detect if an email has changed its password (or if it no longer has access to the calendar) and request a password re-entering. For example, one of my calendars requires the password to be changed every 7 days. It must notify you by email.
+
+8) It must allow the user to create a meeting (in any of the entered calendars). Remember that it also synchronizes them.
+8.1 It must be able to create (CRU) email teams. If an email doesn't exist in the program, it must create the team anyway.
+The SA manages how many.
+8.2 Work teams:
+Each user can have "n" teams. "n" = SA indicates general and specific. That is, everyone has 3 teams, except Diego, who will have 5.
+When creating a team meeting, the available time slots must be displayed. If an email address is not part of the team, this must be indicated, but the meeting must be allowed to be created.
+8.3 It must allow the creation of meetings with email addresses from any non-user.
+8.4 It must allow the user to indicate whether the meeting is virtual or in-person.
+8.5 If the meeting is in-person, it assigns route time (hard copy values ​​of 30, 45, or 60 minutes) before and after, just for that user. This route time is indicated in the calendar as an appointment "[cal.alias] Route to fulfill the next commitment."
+8.6 The route can be a return route; consider this when creating that appointment in the calendar.
+8.7 It must allow the user to select a virtual meeting application, synchronized with the corresponding user (Jitsy does not require a synchronized user).
+8.8 When a group has all registered users, it should display a green circle and the name in green, and red if at least one of the emails is not registered. When opening the group, the unregistered email should be marked in red.
+
+9) This is not a commercially available tool; it is for restricted use.
+
+10) You can use available UIs (blue is preferred). Make your suggestions; there won't be any difficulty.
+
+11) It should be documented on GitHub.
+
+I suggest checking:
+https://tidycal.com/
+https://calendly.com/
+cal.com
+
+Thank you.  
+
+
+
+As defined: 6) Synchronize calendars (secondary to primary):
+6.1 It always synchronizes from the secondary to the primary.
+6.2 In two ways or in one way. The user decides via a flag in the email.
+6.3 Example in the attached video.
+6.4 Regarding the subject of synchronized appointments, you must allow blocking the subject (you must enter [Busy]) or cloning it.
+6.5 If you clone the subject, you must allow a prefix, such as the cal.alias. The prefix is ​​​​per calendar. For example, one of my secondary calendars will have the prefix "[USS]". Or the synchronization starts with the Alias ​​​​in brackets, for example "[University]" and clone the subject. The prefix is ​​​​the cal.alias from point 4.
+You decide how this point is visually managed. If it is with alternatives or it will be enough to put "Busy" in quotation marks or the prefix "alias" in single quotation marks.
+
+
+1) Super Administrator (SA) and User Management
+Role of SA:
+The SA is a high-level admin with the power to create and manage all users, including other SAs. This requires:
+
+Secure login with 2FA: Implement two-factor authentication (e.g., TOTP apps like Google Authenticator or SMS codes).
+
+User CRUD: Create, Read, Update users, but no Delete mentioned (likely soft delete or disable).
+
+User Data:
+Each user profile must include:
+
+Name (Full name)
+
+Verified Email: Use email verification flows (send email with confirmation link).
+
+Alias: A unique, short identifier used for URL paths and calendar aliases.
+
+Description: Text field shown on booking pages.
+
+Profile Image: Upload and display on user’s public calendar page.
+
+Admin Dashboard:
+SA needs an admin dashboard to manage users and SAs with controls and filters.
+
+2) User Availability and Password Management
+Availability Setup:
+Users set their working hours per day, supporting a 24-hour format (e.g., 07:00 to 23:00 or 00:00 to 24:00).
+
+Store availability as intervals, likely per weekday.
+
+UI: Time picker with 24-hour clock, support for multiple intervals per day.
+
+Password Recovery:
+
+Implement “Forgot Password” feature with email link for reset.
+
+Use secure token generation and expiry for resets.
+
+Time Zones:
+
+Each user has an associated time zone.
+
+All displayed times must respect this setting.
+
+Consider daylight savings and automatic adjustments.
+
+3) Primary Calendar and Daily Agenda Email
+Primary Calendar:
+Each user selects one calendar as their main reference.
+
+Email Daily Agenda:
+Users can:
+
+Opt-in to receive daily emails showing their agenda.
+
+Choose what time the email is sent.
+
+Emails must be generated respecting the user's time zone.
+
+Implementation:
+
+A scheduled job (cron) runs daily at user-set times.
+
+Email templating system for agenda details.
+
+Ensure emails only send if opted in.
+
+4) Multiple Calendars per User
+Calendar Counts:
+SA sets limits per user (e.g., default 3, exceptions allowed).
+
+Calendar Aliases:
+Aliases like “Work” or “Personal” help identify calendars and prefix event titles.
+
+Calendar Management UI:
+Allow users to add/remove calendars and assign aliases.
+
+5) Available Calendars & Booking URLs
+Booking Durations:
+Users define multiple appointment durations (30, 45, 60 minutes).
+
+Custom URLs:
+Format: smartcal.one/<user-alias>.<calendar-alias>
+
+SA approves each URL alias.
+
+Blacklist mechanism to block inappropriate or reserved names.
+
+Booking Interface:
+Publicly accessible URL shows:
+
+Available booking days and slots.
+
+Visitors book by entering their email.
+
+Booking Limits:
+SA sets how many meetings an email can book (general and specific per user).
+
+Coverage Slots:
+Buffer times before/after meetings to avoid back-to-back bookings.
+
+User defines duration (e.g., 15 mins).
+
+One coverage slot is designated for breaks/rest.
+
+6) Calendar Syncing
+Sync Direction:
+From secondary calendars to primary calendar (so primary reflects all events).
+
+Sync Options:
+User selects:
+
+One-way sync (secondary → primary)
+
+Two-way sync (bi-directional updates)
+
+Event Subject Handling:
+
+Option to mark synced events as “[Busy]” (blocks time without details).
+
+Or clone event with prefix [Alias] Subject (e.g., [Work] Meeting).
+
+UI:
+Easy toggles or dropdowns for users to select sync preferences.
+
+7) Supported Calendars & Password Handling
+Calendar Providers:
+Google, Outlook, Apple iCal, Mailcow (an open-source mail and calendar server).
+
+Password Management:
+
+Detect if calendar access fails due to password change.
+
+Send email to user requesting password re-entry.
+
+Handle calendars requiring periodic password renewals.
+
+OAuth vs Passwords:
+Where possible, use OAuth tokens (Google, Outlook). For Mailcow or others, might require username/password.
+
+8) Creating Meetings
+Meeting Creation:
+
+Users create meetings on any connected calendar.
+
+Meetings sync to primary calendar.
+
+Email Teams:
+
+Groups of email addresses to book meetings with multiple people.
+
+SA limits the number of teams per user.
+
+UI to create and manage teams.
+
+Meetings with External Emails:
+Allow scheduling with any email, even if not a user or team member.
+
+Meeting Types:
+
+Virtual or in-person.
+
+For in-person, add “route time” (travel time) before and after.
+
+Route events named [Alias] Route to next meeting to block calendar time.
+
+Virtual Meeting Integration:
+Support apps like Zoom, Jitsi.
+
+User selects preferred app.
+
+For Jitsi, no account syncing needed.
+
+Team Status UI:
+
+Green circle and name if all emails are registered users.
+
+Red if some are unregistered.
+
+Detail view marks unregistered emails in red.
+
+9) Restricted Use
+The tool is not commercial but for internal or limited user base.
+
+10) User Interface
+Preferred color theme is blue.
+
+You can use frameworks/libraries like React, Vue, or Angular.
+
+Suggest UI frameworks like Material-UI, Bootstrap, or Tailwind CSS for faster dev.
+
+11) Documentation
+Host code and documentation on GitHub.
+
+Include:
+
+Setup & deployment instructions
+
+User guide
+
+API documentation (if any)
+
+Contribution guidelines
+
+Additional Technical Considerations
+Backend: Python (likely Flask or FastAPI).
+
+Database: To store users, calendars, bookings, aliases, sync preferences (PostgreSQL, MySQL).
+
+Authentication: JWT tokens, 2FA integration.
+
+Calendar API Integration: Google Calendar API, Microsoft Graph API, Apple Calendar via CalDAV.
+
+Email Service: SMTP or third-party like Amazon SES for sending emails.
+
+Hosting: AWS services — EC2, RDS, S3 for images, Lambda for scheduled jobs.
+
+Security: Secure data storage, encrypted passwords, secure token management.

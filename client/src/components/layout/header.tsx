@@ -11,10 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { user, logout } = useAuth();
   const [notificationCount] = useState(3); // Mock notification count
+  const [location] = useLocation();
 
   const getInitials = (name: string) => {
     return name
@@ -24,6 +27,16 @@ export default function Header() {
       .toUpperCase();
   };
 
+  const navItems = [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "My Calendars", href: "/calendars" },
+    { name: "Availability", href: "/settings" },
+    { name: "Booking Pages", href: "/bookings" },
+    { name: "Meeting", href: "/teams" }
+    ,
+    { name: "Integrations", href: "/integrations" },
+  ];
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,42 +45,26 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Calendar className="h-8 w-8 text-primary mr-3" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">SmartCal</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Calendar</h1>
             </div>
           </div>
 
           {/* Navigation - Hidden on mobile, shown on desktop */}
           <nav className="hidden md:flex md:space-x-8">
-            <a
-              href="/dashboard"
-              className="text-primary border-b-2 border-primary px-1 pt-1 pb-4 text-sm font-medium"
-            >
-              Dashboard
-            </a>
-            <a
-              href="/calendars"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1 pt-1 pb-4 text-sm font-medium"
-            >
-              Calendars
-            </a>
-            <a
-              href="/bookings"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1 pt-1 pb-4 text-sm font-medium"
-            >
-              Bookings
-            </a>
-            <a
-              href="/teams"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1 pt-1 pb-4 text-sm font-medium"
-            >
-              Teams
-            </a>
-            <a
-              href="/settings"
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1 pt-1 pb-4 text-sm font-medium"
-            >
-              Settings
-            </a>
+            {navItems.map((item) => (
+              <Link key={item.name} href={item.href}>
+                <a
+                  className={cn(
+                    "px-1 pt-1 pb-4 text-sm font-medium",
+                    location.startsWith(item.href) && (location === item.href || item.href !== '/')
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  )}
+                >
+                  {item.name}
+                </a>
+              </Link>
+            ))}
           </nav>
 
           {/* Right side */}
@@ -109,9 +106,6 @@ export default function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <a href="/settings">Profile Settings</a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href="/settings">Account Settings</a>
                 </DropdownMenuItem>
                 {user?.role === "super_admin" && (
                   <>

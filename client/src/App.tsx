@@ -14,6 +14,7 @@ import Calendars from "@/pages/calendars";
 import Bookings from "@/pages/bookings";
 import Teams from "@/pages/teams";
 import Settings from "@/pages/settings";
+import Integrations from "@/pages/integrations";
 import AdminUsers from "@/pages/admin/users";
 import AdminSecurity from "@/pages/admin/security";
 import AdminBlacklist from "@/pages/admin/blacklist";
@@ -56,6 +57,12 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/integrations">
+        <ProtectedRoute>
+          <Integrations />
         </ProtectedRoute>
       </Route>
       

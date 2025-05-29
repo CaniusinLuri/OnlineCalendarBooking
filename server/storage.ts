@@ -141,9 +141,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updateData: Partial<InsertUser>): Promise<User | undefined> {
-    const [user] = await db.update(users).set({ ...updateData, updatedAt: new Date() }).where(eq(users.id, id)).returning();
-    return user || undefined;
+    try {
+      const [user] = await db.update(users)
+        .set({ 
+          ...updateData,
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, id))
+        .returning();
+      return user || undefined;
+    } catch (error) {
+      console.error("Update user error:****************************", error);
+      return undefined;
+    }
   }
+  
 
   async deleteUser(id: number): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
@@ -331,18 +343,26 @@ export class DatabaseStorage implements IStorage {
 
   // User availability operations
   async getUserAvailability(userId: number): Promise<UserAvailability[]> {
-    return await db.select().from(userAvailability).where(eq(userAvailability.userId, userId)).orderBy(asc(userAvailability.dayOfWeek));
+    return await db
+      .select()
+      .from(userAvailability)
+      .where(eq(userAvailability.userId, userId))
+      .orderBy(asc(userAvailability.dayOfWeek));
   }
 
   async setUserAvailability(availability: InsertUserAvailability[]): Promise<UserAvailability[]> {
-    if (availability.length === 0) return [];
-    
-    // Delete existing availability for the user
-    await db.delete(userAvailability).where(eq(userAvailability.userId, availability[0].userId));
-    
-    // Insert new availability
-    const newAvailability = await db.insert(userAvailability).values(availability).returning();
-    return newAvailability;
+    // First delete existing availability for the user
+    await db
+      .delete(userAvailability)
+      .where(eq(userAvailability.userId, availability[0].userId));
+
+    // Then insert new availability
+    const result = await db
+      .insert(userAvailability)
+      .values(availability)
+      .returning();
+
+    return result;
   }
 
   // Calendar integration operations

@@ -152,14 +152,14 @@ export default function Teams() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Teams</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meeting</h1>
             <p className="text-gray-500 dark:text-gray-400">Manage your team groups for easier meeting scheduling</p>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Team
+                Create Meeting
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">

@@ -1,44 +1,129 @@
-import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertCalendarSchema, insertBookingPageSchema, insertBookingSchema, insertTeamSchema, insertMeetingSchema, insertAliasBlacklistSchema } from "@shared/schema";
+import { insertUserSchema, insertCalendarSchema, insertBookingPageSchema, insertBookingSchema, insertTeamSchema, insertMeetingSchema, insertAliasBlacklistSchema, User } from "@shared/schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from 'url';
+import express, { Request, Response, NextFunction } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: any; // You can replace `any` with your actual user type if you have one
+  }
+}
+
+
+// Configure multer for file uploads
+const multerStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: multerStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
 // Middleware to verify JWT token
-const authenticateToken = async (req: any, res: any, next: any) => {
+const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
+  console.log("=== Authentication Debug ===");
+  console.log("Request path:", req.path);
+  console.log("Request method:", req.method);
+  console.log("All headers:", req.headers);
+  
   const authHeader = req.headers["authorization"];
+  console.log("Auth header:", authHeader);
+  
   const token = authHeader && authHeader.split(" ")[1];
+  console.log("Token:", token ? 'Present' : 'Missing');
 
   if (!token) {
+    console.log("No token found in request");
     return res.status(401).json({ message: "Access token required" });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    console.log("Attempting to verify token");
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    console.log('Decoded token:', decoded);
+    
     const user = await storage.getUser(decoded.userId);
+    console.log('User found:', user ? 'Yes' : 'No');
+    console.log('User object:', user);
+    
     if (!user) {
+      console.log("User not found in database");
       return res.status(401).json({ message: "Invalid token" });
     }
+
+    // Set the complete user object
     req.user = user;
+    console.log('Request user after setting:', req.user);
+    console.log("=== Authentication Successful ===");
+    
     next();
   } catch (error) {
-    return res.status(403).json({ message: "Invalid token" });
+    console.error('Token verification error:', error);
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: "Token has expired" });
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    return res.status(401).json({ message: "Authentication failed" });
   }
 };
 
 // Middleware to check Super Admin role
-const requireSuperAdmin = (req: any, res: any, next: any) => {
-  if (req.user.role !== "super_admin") {
+const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (req.user?.role !== "super_admin") {
     return res.status(403).json({ message: "Super Admin access required" });
   }
   next();
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: express.Express): Promise<Server> {
+  // Log all incoming requests
+  app.use((req, res, next) => {
+    console.log('Incoming request:', {
+      method: req.method,
+      path: req.path,
+      headers: req.headers,
+      body: req.body
+    });
+    next();
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -113,7 +198,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/:id", authenticateToken, async (req, res) => {
+  // Password update route - moved before :id route
+  app.put("/api/users/password", authenticateToken, async (req, res) => {
+    try {
+      console.log('=== Password Update Route ===');
+      console.log('Request body:', req.body);
+      console.log('User in request:', req.user);
+      
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      // Verify current password
+      const user = await storage.getUser(req.user.id);
+      console.log('User from storage:', user);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      const updatedUser = await storage.updateUser(req.user.id, { password: hashedPassword });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update password" });
+      }
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Password update error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User ID routes - moved after password route
+  app.get("/api/users/:id", authenticateToken, async (req, res, next) => {
+    // Skip if the ID is "password"
+    if (req.params.id === "password") {
+      return next();
+    }
+    
     try {
       const userId = parseInt(req.params.id);
       
@@ -417,6 +550,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Avatar upload route
+  app.post("/api/users/avatar", authenticateToken, upload.single('avatar'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Generate the URL for the uploaded file
+      const avatarUrl = `/uploads/${req.file.filename}`;
+
+      // Update user's profile with new avatar URL
+      const updatedUser = await storage.updateUser(req.user.id, {
+        profileImage: avatarUrl
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      console.error("Avatar upload error:", error);
+      res.status(500).json({ message: "Failed to upload avatar" });
+    }
+  });
+
+  // User availability routes
+  app.get("/api/availability", authenticateToken, async (req, res) => {
+    try {
+      const availability = await storage.getUserAvailability(req.user.id);
+      res.json(availability);
+    } catch (error) {
+      console.error("Get availability error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/availability", authenticateToken, async (req, res) => {
+    try {
+      const availabilityData = req.body.map((item: any) => ({
+        userId: req.user.id,
+        dayOfWeek: item.dayOfWeek,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        isAvailable: item.isAvailable
+      }));
+
+      const availability = await storage.setUserAvailability(availabilityData);
+      res.json(availability);
+    } catch (error) {
+      console.error("Update availability error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
   const httpServer = createServer(app);
   return httpServer;
